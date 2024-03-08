@@ -39,14 +39,34 @@ def log_negative_comments(negative_comments):
 
 def fetch_facebook_comments(profile_url):
     # Replace with Apify actor ID for Facebook comments scraping
-    run = client.run_web_scraper(actor_id="YOUR_FACEBOOK_SCRAPER_ID", input={"startUrls": [profile_url]})
-    comments = run["results"][0]["data"]["comments"]  # Modify based on your scraper structure
+    # run = client.run_web_scraper(actor_id="YOUR_FACEBOOK_SCRAPER_ID", input={"startUrls": [profile_url]})
+    # comments = run["results"][0]["data"]["comments"]  # Modify based on your scraper structure
+    # return comments
+    input_data = {
+        "startUrls": [profile_url]
+    }
+    
+    # Start the actor and wait for it to finish
+    actor_run = client.actor('apify/facebook-comments-scraper').call(run_input= input_data)
+    #actor_run.wait_for_finish()
+
+    # Fetch results from the actor's default dataset
+    dataset = client.dataset(actor_run.default_dataset_id)
+    dataset_items = dataset.get_items()
+    
+    # Extract comments from the dataset items
+    comments = [item['comment'] for item in dataset_items]
     return comments
 
 def fetch_instagram_comments(profile_url):
     # Replace with Apify actor ID for Instagram comments scraping
-    run = client.run_web_scraper(actor_id="YOUR_INSTAGRAM_SCRAPER_ID", input={"startUrls": [profile_url]})
-    comments = run["results"][0]["data"]["comments"]  # Modify based on your scraper structure
+    actor_call = client.actor('apify/instagram-comment-scraper').call()
+
+    # Fetch results from the actor's default dataset
+    dataset_items = client.dataset(actor_call['defaultDatasetId']).list_items().items
+
+    # Extract comments from the dataset items
+    comments = [item['comment'] for item in dataset_items]
     return comments
 
 # def fetch_twitter_comments(profile_username):
@@ -104,13 +124,6 @@ def index():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-
-
-
-
 
 # from flask import Flask, render_template, request
 # from textblob import TextBlob
